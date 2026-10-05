@@ -1,20 +1,22 @@
-"""Walter's web app: a small JSON API plus the static frontend.
+"""Walter's JSON API, plus the static site in web/.
+
+The site in web/ runs Walter in the browser and needs no server (that's how it
+is hosted on Vercel). This server is for using Walter from Python or over HTTP.
 
 Run from the repository root:
     uvicorn app.server:app --port 8000
-then open http://localhost:8000
+then open http://localhost:8000 (the site) or http://localhost:8000/docs (the API)
 """
 import os
 from typing import List, Optional, Tuple
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .walter_service import Walter
 
-STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'web')
 
 app = FastAPI(title='Walter', description='A small GPT that invents names, and a window into how it works.')
 walter = Walter()
@@ -73,9 +75,5 @@ def inspect(req: InspectRequest):
     return call(walter.inspect, req.name, req.ablate)
 
 
-@app.get('/')
-def index():
-    return FileResponse(os.path.join(STATIC, 'index.html'))
-
-
-app.mount('/static', StaticFiles(directory=STATIC), name='static')
+# Everything that isn't /api or /docs is the static site.
+app.mount('/', StaticFiles(directory=WEB, html=True), name='web')

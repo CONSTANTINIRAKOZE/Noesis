@@ -1,24 +1,19 @@
-// Walter's frontend: talks to the JSON API in app/server.py.
+// Walter's frontend. Walter himself runs right here in the browser (walter.js),
+// so this page works as a static site with no server.
+import { Walter } from './walter.js';
 
 const $ = (id) => document.getElementById(id);
 const show = (ch) => (ch === '.' ? 'end' : ch);
 
-async function api(path, body) {
-  const res = await fetch(path, body === undefined ? {} : {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    const d = data.detail;
-    throw new Error(typeof d === 'string' ? d : 'Please check your input.');
-  }
-  return data;
-}
+let walter;
+const ready = Walter.load('.').then((w) => { walter = w; });
+// Give the browser a moment to paint "thinking…" before the maths runs.
+const tick = () => new Promise((r) => setTimeout(r, 0));
 
 function guard(errorEl, fn) {
   return async (...args) => {
     errorEl.textContent = '';
-    try { await fn(...args); } catch (e) { errorEl.textContent = e.message; }
+    try { await ready; await tick(); await fn(...args); } catch (e) { errorEl.textContent = e.message; }
   };
 }
 
@@ -46,18 +41,17 @@ document.querySelectorAll('nav button').forEach((btn) => btn.addEventListener('c
 }));
 
 // ---- header ---------------------------------------------------------------
-api('/api/info').then((i) => {
+ready.then(() => walter.info()).then((i) => {
   $('stats').textContent = `${i.n_layer} layers · ${i.n_head} heads each · ${i.params.toLocaleString()} parameters · `
     + `loss ${i.dev_loss} on unseen names · trained on ${i.n_train_names.toLocaleString()} names`;
-}).catch(() => { $('stats').textContent = 'could not reach Walter'; });
+}).catch(() => { $('stats').textContent = 'could not load Walter'; });
 
 // ---- Invent ---------------------------------------------------------------
 $('gen-temp').addEventListener('input', (e) => { $('gen-temp-val').textContent = Number(e.target.value).toFixed(1); });
 const invent = guard($('gen-error'), async () => {
-  const out = await api('/api/generate', {
-    n: Number($('gen-n').value), temperature: Number($('gen-temp').value), prefix: $('gen-prefix').value,
-  });
-  $('gen-out').innerHTML = out.names.map((n) => `<li><span>${n.name || '(empty)'}</span>${
+  const n = Math.min(50, Math.max(1, Number($('gen-n').value) || 1));
+  const names = walter.generate(n, Number($('gen-temp').value), $('gen-prefix').value);
+  $('gen-out').innerHTML = names.map((n) => `<li><span>${n.name || '(empty)'}</span>${
     n.known ? '<span class="pill known">real name</span>' : '<span class="pill new">new</span>'}</li>`).join('');
 });
 $('gen-form').addEventListener('submit', (e) => { e.preventDefault(); invent(); });
@@ -65,7 +59,7 @@ $('gen-form').addEventListener('submit', (e) => { e.preventDefault(); invent(); 
 // ---- Predict --------------------------------------------------------------
 const predict = guard($('pred-error'), async () => {
   const prefix = $('pred-prefix').value.toLowerCase();
-  const out = await api('/api/next', { prefix });
+  const out = walter.nextLetter(prefix);
   bars($('pred-chart'), out.distribution, {
     onPick: (ch) => {
       if (ch === '.') { $('pred-error').textContent = `Walter would end the name here: "${prefix}".`; return; }
@@ -79,7 +73,7 @@ $('pred-clear').addEventListener('click', () => { $('pred-prefix').value = ''; p
 
 // ---- Score ----------------------------------------------------------------
 const score = guard($('score-error'), async () => {
-  const s = await api('/api/score', { name: $('score-name').value });
+  const s = walter.score($('score-name').value);
   const maxS = Math.max(...s.steps.flatMap((t) => [t.surprise_gpt, t.surprise_bigram]), 4);
   const where = s.in_training ? 'in Walter\'s training names' : s.in_dataset ? 'in the dataset, but not in training' : 'not in the dataset';
   $('score-out').innerHTML = `
@@ -106,7 +100,7 @@ $('score-form').addEventListener('submit', (e) => { e.preventDefault(); score();
 let ablated = new Set();   // "layer,head"
 const inspect = guard($('in-error'), async () => {
   const ablate = [...ablated].map((k) => k.split(',').map(Number));
-  const r = await api('/api/inspect', { name: $('in-name').value, ablate });
+  const r = walter.inspect($('in-name').value, ablate);
   const T = r.tokens.length;
   const heads = $('in-heads');
   heads.innerHTML = '';

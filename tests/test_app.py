@@ -20,7 +20,8 @@ def test_info(client):
 def test_frontend_is_served(client):
     page = client.get('/')
     assert page.status_code == 200 and '<title>Walter</title>' in page.text
-    assert client.get('/static/app.js').status_code == 200
+    for f in ['app.js', 'walter.js', 'walter.json', 'walter.bin']:
+        assert client.get(f'/{f}').status_code == 200
 
 
 def test_generate_respects_prefix_and_seed(client):

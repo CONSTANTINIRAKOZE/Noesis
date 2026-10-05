@@ -1,0 +1,7 @@
+# Vercel only serves the static site in web/ (Walter runs in the browser).
+app/
+tests/
+rung*/
+data/
+requirements.txt
+*.ipynb

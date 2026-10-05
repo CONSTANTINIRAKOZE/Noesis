@@ -56,14 +56,7 @@ Then open the rungs in order. Rungs 1–2 use only numpy, and Rungs 3–6 use Py
 
 ## Talk to Walter (web app)
 
-[`app/`](app) is a small web app around the Rung 5 GPT: a FastAPI backend ([`app/server.py`](app/server.py)) and a plain HTML/JS frontend ([`app/static/`](app/static)) with no build step.
-
-```bash
-pip install -r requirements.txt
-uvicorn app.server:app --port 8000      # run from the repository root
-```
-
-Then open <http://localhost:8000>. If `rung5_gpt/walter_gpt.pt` doesn't exist yet, the server trains Walter first (about 10–15 minutes, once).
+[`web/`](web) is a small website for playing with the Rung 5 GPT. **Walter runs entirely in your browser**: [`web/walter.js`](web/walter.js) is his forward pass rewritten in plain JavaScript, loading his trained weights from `web/walter.bin` (0.8 MB). There's no server and no build step, so it can be hosted anywhere that serves static files.
 
 | Tab | What it does |
 |---|---|
@@ -72,7 +65,13 @@ Then open <http://localhost:8000>. If `rung5_gpt/walter_gpt.pt` doesn't exist ye
 | **Score a name** | Gives the surprise per letter from the GPT and from the Rung 1 bigram, side by side |
 | **Inside Walter** | Shows all 16 attention heads; click a head to switch it off and watch the prediction and logit lens change |
 
-The JSON API (`/api/info`, `/api/generate`, `/api/next`, `/api/score`, `/api/inspect`) is documented at <http://localhost:8000/docs>. To run the tests: `python -m pytest tests`.
+**Put it online with Vercel:** at [vercel.com/new](https://vercel.com/new), import this GitHub repository and click **Deploy**. [`vercel.json`](vercel.json) already tells Vercel to serve the `web/` folder, so no settings are needed.
+
+**Run it on your computer:** `cd web` then `python -m http.server 8000`, and open <http://localhost:8000>.
+
+**Python API (optional):** [`app/server.py`](app/server.py) serves the same site plus a JSON API (`/api/generate`, `/api/next`, `/api/score`, `/api/inspect`, with docs at `/docs`) backed by PyTorch: `pip install -r requirements.txt`, then `uvicorn app.server:app --port 8000`.
+
+**If you retrain Walter** in Rung 5, run `python -m app.export_weights` to refresh the files in `web/`. `python -m pytest tests` checks the API, and it also checks that the JavaScript Walter matches the PyTorch one number for number.
 
 ## Standing on shoulders
 
