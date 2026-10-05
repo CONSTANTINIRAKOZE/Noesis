@@ -54,6 +54,26 @@ jupyter notebook
 
 Then open the rungs in order. Rungs 1–2 use only numpy, and Rungs 3–6 use PyTorch on a CPU. Rung 5 trains Walter in about 10–15 minutes and saves him to `rung5_gpt/walter_gpt.pt`. Rung 6 loads that file, or retrains Walter with the same seed if it's missing.
 
+## Talk to Walter (web app)
+
+[`app/`](app) is a small web app around the Rung 5 GPT: a FastAPI backend ([`app/server.py`](app/server.py)) and a plain HTML/JS frontend ([`app/static/`](app/static)) with no build step.
+
+```bash
+pip install -r requirements.txt
+uvicorn app.server:app --port 8000      # run from the repository root
+```
+
+Then open <http://localhost:8000>. If `rung5_gpt/walter_gpt.pt` doesn't exist yet, the server trains Walter first (about 10–15 minutes, once).
+
+| Tab | What it does |
+|---|---|
+| **Invent** | Generates names, optionally starting with a prefix, at any temperature, and marks which ones are new |
+| **Predict** | Shows Walter's probability for every next letter as you type; click a bar to add that letter |
+| **Score a name** | Gives the surprise per letter from the GPT and from the Rung 1 bigram, side by side |
+| **Inside Walter** | Shows all 16 attention heads; click a head to switch it off and watch the prediction and logit lens change |
+
+The JSON API (`/api/info`, `/api/generate`, `/api/next`, `/api/score`, `/api/inspect`) is documented at <http://localhost:8000/docs>. To run the tests: `python -m pytest tests`.
+
 ## Standing on shoulders
 
 The path follows Andrej Karpathy's *Neural Networks: Zero to Hero*. The destination is the interpretability work of Chris Olah, Neel Nanda and Anthropic's interpretability team. The dataset (`data/names.txt`) comes from Karpathy's [makemore](https://github.com/karpathy/makemore).
