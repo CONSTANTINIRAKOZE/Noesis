@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Walter</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%232f5bd3%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2220%22 font-family=%22sans-serif%22 font-weight=%22bold%22 fill=%22white%22 text-anchor=%22middle%22%3EW%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>Walter</h1>
+      <p class="tagline">A small GPT that invents names, and a window into how it does it.</p>
+    </div>
+    <p class="stats" id="stats">loading Walter…</p>
+  </header>
+
+  <nav role="tablist">
+    <button role="tab" data-tab="invent" aria-selected="true">Invent</button>
+    <button role="tab" data-tab="predict">Predict</button>
+    <button role="tab" data-tab="score">Score a name</button>
+    <button role="tab" data-tab="inside">Inside Walter</button>
+  </nav>
+
+  <main>
+    <!-- Invent -->
+    <section id="tab-invent" class="panel">
+      <p class="lead">Walter writes names one letter at a time, rolling a weighted die at every step. Names that appear nowhere in his dataset are marked <span class="pill new">new</span>.</p>
+      <form id="gen-form" class="controls">
+        <label>Starts with <input id="gen-prefix" maxlength="14" placeholder="optional, e.g. con" autocomplete="off"></label>
+        <label>How many <input id="gen-n" type="number" min="1" max="50" value="12"></label>
+        <label>Temperature <span class="hint" id="gen-temp-val">1.0</span>
+          <input id="gen-temp" type="range" min="0.1" max="2" step="0.1" value="1"></label>
+        <button type="submit" class="primary">Invent names</button>
+      </form>
+      <p class="hint">Low temperature means safe, common names. High temperature means wilder ones.</p>
+      <p class="error" id="gen-error"></p>
+      <ul id="gen-out" class="names"></ul>
+    </section>
+
+    <!-- Predict -->
+    <section id="tab-predict" class="panel" hidden>
+      <p class="lead">Type the start of a name and see Walter's probability for every possible next letter. Click a bar to add that letter.</p>
+      <div class="controls">
+        <label>Name so far <input id="pred-prefix" maxlength="14" placeholder="start typing…" autocomplete="off"></label>
+        <button id="pred-clear" type="button">Clear</button>
+      </div>
+      <p class="error" id="pred-error"></p>
+      <div id="pred-chart" class="bars"></div>
+    </section>
+
+    <!-- Score -->
+    <section id="tab-score" class="panel" hidden>
+      <p class="lead">How surprised is Walter by a name? Each letter shows the surprise (−log p) from the GPT and from the Rung 1 counting table. Lower means "that looks like a name to me".</p>
+      <form id="score-form" class="controls">
+        <label>Name <input id="score-name" maxlength="15" value="constantin" autocomplete="off"></label>
+        <button type="submit" class="primary">Score</button>
+      </form>
+      <p class="error" id="score-error"></p>
+      <div id="score-out"></div>
+    </section>
+
+    <!-- Inside -->
+    <section id="tab-inside" class="panel" hidden>
+      <p class="lead">Walter's 16 attention heads reading a name: each grid's rows are positions, and its columns are where that position looks. <strong>Click a head to switch it off</strong> and see how the prediction changes. Try switching off L0 H2 and L0 H3, Walter's previous-letter heads, on <code>ann</code>.</p>
+      <form id="in-form" class="controls">
+        <label>Name <input id="in-name" maxlength="14" value="annabelle" autocomplete="off"></label>
+        <button type="submit" class="primary">Look inside</button>
+        <button id="in-reset" type="button">Switch all heads back on</button>
+      </form>
+      <p class="error" id="in-error"></p>
+      <div class="inside">
+        <div id="in-heads" class="heads"></div>
+        <aside>
+          <h3>What comes next?</h3>
+          <div id="in-next" class="bars small"></div>
+          <h3>Logit lens</h3>
+          <p class="hint">Walter's best guesses if he had to answer after each layer.</p>
+          <table id="in-lens" class="lens"></table>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer>Built in the <a href="https://github.com/CONSTANTINIRAKOZE/Noesis">Noesis</a> climb, Rungs 1–6.</footer>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

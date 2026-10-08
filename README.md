@@ -54,6 +54,25 @@ jupyter notebook
 
 Then open the rungs in order. Rungs 1–2 use only numpy, and Rungs 3–6 use PyTorch on a CPU. Rung 5 trains Walter in about 10–15 minutes and saves him to `rung5_gpt/walter_gpt.pt`. Rung 6 loads that file, or retrains Walter with the same seed if it's missing.
 
+## Talk to Walter (web app)
+
+[`web/`](web) is a small website for playing with the Rung 5 GPT. **Walter runs entirely in your browser**: [`web/walter.js`](web/walter.js) is his forward pass rewritten in plain JavaScript, loading his trained weights from `web/walter.bin` (0.8 MB). There's no server and no build step, so it can be hosted anywhere that serves static files.
+
+| Tab | What it does |
+|---|---|
+| **Invent** | Generates names, optionally starting with a prefix, at any temperature, and marks which ones are new |
+| **Predict** | Shows Walter's probability for every next letter as you type; click a bar to add that letter |
+| **Score a name** | Gives the surprise per letter from the GPT and from the Rung 1 bigram, side by side |
+| **Inside Walter** | Shows all 16 attention heads; click a head to switch it off and watch the prediction and logit lens change |
+
+**Put it online with Vercel:** at [vercel.com/new](https://vercel.com/new), import this GitHub repository and click **Deploy**. [`vercel.json`](vercel.json) already tells Vercel to serve the `web/` folder, so no settings are needed.
+
+**Run it on your computer:** `cd web` then `python -m http.server 8000`, and open <http://localhost:8000>.
+
+**Python API (optional):** [`app/server.py`](app/server.py) serves the same site plus a JSON API (`/api/generate`, `/api/next`, `/api/score`, `/api/inspect`, with docs at `/docs`) backed by PyTorch: `pip install -r requirements.txt`, then `uvicorn app.server:app --port 8000`.
+
+**If you retrain Walter** in Rung 5, run `python -m app.export_weights` to refresh the files in `web/`. `python -m pytest tests` checks the API, and it also checks that the JavaScript Walter matches the PyTorch one number for number.
+
 ## Standing on shoulders
 
 The path follows Andrej Karpathy's *Neural Networks: Zero to Hero*. The destination is the interpretability work of Chris Olah, Neel Nanda and Anthropic's interpretability team. The dataset (`data/names.txt`) comes from Karpathy's [makemore](https://github.com/karpathy/makemore).
